@@ -13,13 +13,15 @@
 /* ---------------- 1. DATA LAYER ----------------
    Poster URLs: MyAnimeList CDN (hotlink-friendly).
    Backdrops: Unsplash (stable). Swap for TMDB in production.
-   videoPool: free Google sample MP4s as episode placeholders.
+   videoPool: free sample MP4s as episode placeholders, verified
+   reachable (206 Partial Content). NOTE: Google's gtv-videos-bucket
+   returns 403 on some networks — do NOT switch back to it.
    Replace `fetchAnime()` with `fetch('/api/anime')` in prod. */
 
 const SAMPLE_VIDEOS = [
-  'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
+  'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4',
 ];
 
 const ANIME_DATA = [
@@ -596,6 +598,10 @@ function bindEvents() {
   // Player modal
   els.playerClose.addEventListener('click', closePlayer);
   els.playerBackdrop.addEventListener('click', closePlayer);
+  // Surface stream failures instead of showing a dead black player
+  els.playerVideo.addEventListener('error', () => {
+    els.playerMetaLine.textContent = '⚠ Stream failed to load — check your connection, then try another episode.';
+  });
   els.episodeList.addEventListener('click', (e) => {
     const row = e.target.closest('[data-ep]');
     if (row) gotoEpisode(Number(row.dataset.ep));
