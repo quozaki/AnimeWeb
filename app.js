@@ -13,16 +13,39 @@
 /* ---------------- 1. DATA LAYER ----------------
    Poster URLs: MyAnimeList CDN (hotlink-friendly).
    Backdrops: Unsplash (stable). Swap for TMDB in production.
-   videoPool: free sample MP4s as episode placeholders, verified
-   reachable (206 Partial Content). NOTE: Google's gtv-videos-bucket
-   returns 403 on some networks — do NOT switch back to it.
-   Replace `fetchAnime()` with `fetch('/api/anime')` in prod. */
+   TRAILERS: official YouTube trailer/PV per title, each verified
+   via oEmbed (official channels: Crunchyroll, Aniplex USA,
+   TOHO animation, PONY CANYON, MAPPA, Toei, ONE PIECE ENG).
+   Embedded with youtube-nocookie for privacy. Episode buttons
+   browse the episode list UI; playback is the official trailer
+   (full episodes are licensed to paid streamers and cannot be
+   embedded legally). Replace with your licensed HLS CDN in prod. */
 
-const SAMPLE_VIDEOS = [
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
-  'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4',
-];
+const TRAILERS = {
+  'solo-leveling':    { id: 'NtssbUbxDDM', by: 'Crunchyroll' },
+  'frieren':          { id: 'Iwr1aLEDpe4', by: 'Crunchyroll' },
+  'jujutsu-kaisen':   { id: '5yb2N3pnztU', by: 'TOHO animation' },
+  'demon-slayer':     { id: 'PUeB0qbisq0', by: 'Aniplex USA' },
+  'attack-on-titan':  { id: 'E7WytLM2KvY', by: 'PONY CANYON' },
+  'chainsaw-man':     { id: 'l96zmDlWCBk', by: 'Crunchyroll' },
+  'spy-x-family':     { id: '30Dy3GERCqQ', by: 'TOHO animation' },
+  'oshi-no-ko':       { id: 'BQ28u-8c-hI', by: 'Oshi no Ko official' },
+  'vinland-saga':     { id: 'Ph50sNkApVM', by: 'Crunchyroll' },
+  'my-hero-academia': { id: 'fqMHdYPxl3Y', by: 'TOHO animation' },
+  'one-piece':        { id: 'okSWhWr52u8', by: 'ONE PIECE Official ENG' },
+  'death-note':       { id: 'NlJZ-YgAt-c', by: 'Crunchyroll' },
+};
+
+function trailerEmbedUrl(animeId) {
+  const t = TRAILERS[animeId];
+  if (!t) return '';
+  return `https://www.youtube-nocookie.com/embed/${t.id}?autoplay=1&rel=0`;
+}
+
+function trailerWatchUrl(animeId) {
+  const t = TRAILERS[animeId];
+  return t ? `https://www.youtube.com/watch?v=${t.id}` : '#';
+}
 
 const ANIME_DATA = [
   {
@@ -193,8 +216,8 @@ const els = {
   playerKicker: $('#playerKicker'),
   playerTitle: $('#playerTitle'),
   playerEpisodeLabel: $('#playerEpisodeLabel'),
-  playerVideo: $('#playerVideo'),
-  playerSource: $('#playerSource'),
+  playerFrame: $('#playerFrame'),
+  playerYTLink: $('#playerYTLink'),
   playerSynopsis: $('#playerSynopsis'),
   playerMetaLine: $('#playerMetaLine'),
   episodeList: $('#episodeList'),
@@ -381,17 +404,12 @@ function setGenre(genre) {
 }
 
 /* ---------------- 6. PLAYER MODAL ----------------
-   Layout: video (left) + episode selection list (right).
-   Episodes are generated client-side; swap `episodeVideoUrl()`
-   with your CDN / HLS URL per episode in production. */
+   Layout: trailer player (left) + episode selection list (right).
+   Playback is the title's official YouTube trailer (see TRAILERS).
+   Episode buttons update the browser UI + restart the trailer;
+   swap `trailerEmbedUrl()` with your licensed episode CDN in prod. */
 
 const MAX_LISTED_EPISODES = 24; // cap UI for 1000+ ep series
-
-function episodeVideoUrl(animeId, ep) {
-  // Rotate sample videos so episodes feel distinct
-  const idx = (ep + animeId.length) % SAMPLE_VIDEOS.length;
-  return SAMPLE_VIDEOS[idx];
-}
 
 function episodeTitle(anime, ep) {
   const total = Math.min(anime.episodes, MAX_LISTED_EPISODES);
@@ -413,10 +431,7 @@ function openPlayer(animeId, episode = 1) {
 
 function closePlayer() {
   els.playerModal.classList.add('hidden');
-  els.playerVideo.pause();
-  els.playerVideo.removeAttribute('src');
-  els.playerSource.setAttribute('src', '');
-  els.playerVideo.load();
+  els.playerFrame.setAttribute('src', ''); // stop YouTube playback
   document.body.style.overflow = '';
   startHeroRotation();
 }
@@ -427,21 +442,19 @@ function renderPlayer() {
   const ep = state.currentEpisode;
   const total = anime.episodes;
   const listed = Math.min(total, MAX_LISTED_EPISODES);
+  const trailer = TRAILERS[anime.id];
 
-  els.playerKicker.textContent = `${state.dub ? 'DUB' : 'SUB'} • ${anime.type} • ${anime.year}`;
+  els.playerKicker.textContent = `Official Trailer • ${trailer ? trailer.by : ''} • ${anime.year}`;
   els.playerTitle.textContent = anime.title;
   els.playerEpisodeLabel.textContent = `${episodeTitle(anime, ep)}  •  E${ep} / ${total}`;
   els.playerSynopsis.textContent = anime.synopsis;
   els.playerMetaLine.textContent = `★ ${anime.rating.toFixed(1)}  •  ${anime.genres.join(' · ')}  •  ${anime.studio}`;
   els.epCount.textContent = `(${total})`;
 
-  // Swap video source
-  els.playerVideo.pause();
-  els.playerSource.setAttribute('src', episodeVideoUrl(anime.id, ep));
-  els.playerVideo.setAttribute('poster', anime.backdrop || anime.poster);
-  els.playerVideo.load();
-  // Autoplay muted-safe: play() may reject without user gesture — ignore
-  els.playerVideo.play().catch(() => {});
+  // Load official trailer (re-setting src restarts it on episode change)
+  els.playerFrame.setAttribute('src', trailerEmbedUrl(anime.id));
+  els.playerFrame.setAttribute('title', `${anime.title} — official trailer`);
+  els.playerYTLink.setAttribute('href', trailerWatchUrl(anime.id));
 
   // Episode list
   els.episodeList.innerHTML = Array.from({ length: listed }, (_, i) => {
@@ -598,10 +611,6 @@ function bindEvents() {
   // Player modal
   els.playerClose.addEventListener('click', closePlayer);
   els.playerBackdrop.addEventListener('click', closePlayer);
-  // Surface stream failures instead of showing a dead black player
-  els.playerVideo.addEventListener('error', () => {
-    els.playerMetaLine.textContent = '⚠ Stream failed to load — check your connection, then try another episode.';
-  });
   els.episodeList.addEventListener('click', (e) => {
     const row = e.target.closest('[data-ep]');
     if (row) gotoEpisode(Number(row.dataset.ep));
