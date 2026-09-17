@@ -1,0 +1,208 @@
+/* ============================================================
+   AniStream — styles.css
+   Tailwind is loaded via CDN (see index.html).
+   This file holds: base polish, scrollbars, animations,
+   card hover effects, line-clamp fallback, player list.
+   If you migrate to Tailwind CLI, add:
+     @tailwind base; @tailwind components; @tailwind utilities;
+   ============================================================ */
+
+:root {
+  --brand: #8b5cf6;
+  --accent: #f43f5e;
+}
+
+html {
+  scrollbar-color: #2a2a3d #0a0a12;
+}
+
+body {
+  background:
+    radial-gradient(1200px 500px at 80% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+    #0a0a12;
+}
+
+/* ---------- Navbar state on scroll ---------- */
+#navbar.scrolled {
+  background: rgba(10, 10, 18, 0.85);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Hero ---------- */
+#heroBackdrop {
+  animation: heroZoom 18s ease-in-out infinite alternate;
+}
+@keyframes heroZoom {
+  from { transform: scale(1.05); }
+  to   { transform: scale(1.14); }
+}
+
+.hero-dot {
+  height: 6px;
+  border-radius: 999px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.25);
+  width: 28px;
+}
+.hero-dot:hover { background: rgba(255, 255, 255, 0.55); }
+.hero-dot.active {
+  width: 48px;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+}
+
+/* ---------- Genre pills ---------- */
+.genre-pill {
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.genre-pill:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.genre-pill.active {
+  background: linear-gradient(90deg, #7c3aed, #f43f5e);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 18px -4px rgba(139, 92, 246, 0.6);
+}
+
+/* ---------- Anime cards ---------- */
+.anime-card {
+  animation: cardIn 0.45s ease both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.anime-card .poster-wrap img {
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), filter 0.3s;
+}
+.anime-card:hover .poster-wrap img {
+  transform: scale(1.07);
+}
+
+.anime-card .hover-overlay {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.28s ease;
+}
+.anime-card:hover .hover-overlay,
+.anime-card:focus-within .hover-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.anime-card .play-btn {
+  transform: scale(0.7);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.anime-card:hover .play-btn { transform: scale(1); }
+
+/* Skeleton shimmer (initial load) */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #1c1c2b;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* ---------- Scrollbars ---------- */
+.scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #2a2a3d; border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+#episodeList::-webkit-scrollbar { width: 8px; }
+#episodeList::-webkit-scrollbar-thumb { background: #2a2a3d; border-radius: 999px; }
+#episodeList::-webkit-scrollbar-thumb:hover { background: #3a3a55; }
+
+/* ---------- Episode rows ---------- */
+.episode-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem;
+  border-radius: 0.8rem;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.episode-row:hover { background: rgba(255, 255, 255, 0.07); }
+.episode-row.active {
+  background: rgba(139, 92, 246, 0.16);
+  outline: 1px solid rgba(139, 92, 246, 0.45);
+}
+.episode-row .ep-num {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.65rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+.episode-row.active .ep-num {
+  background: linear-gradient(135deg, #7c3aed, #f43f5e);
+  color: #fff;
+}
+
+/* ---------- Video player ---------- */
+#playerVideo {
+  background: #000;
+  outline: none;
+}
+#playerVideo::-webkit-media-controls-panel {
+  background-image: linear-gradient(transparent, rgba(0,0,0,0.7));
+}
+
+/* ---------- Modal transitions ---------- */
+#playerModal, #infoModal { animation: fadeIn 0.22s ease; }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- Line clamp fallback ---------- */
+.line-clamp-2, .line-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 { -webkit-line-clamp: 2; }
+.line-clamp-3 { -webkit-line-clamp: 3; }
+
+/* ---------- Focus visibility (a11y) ---------- */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #heroBackdrop, .anime-card, .skeleton::after { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
